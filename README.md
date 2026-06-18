@@ -1,7 +1,8 @@
 # AI Support Summary API
 
-Minimal FastAPI backend for an AI-assisted support summary application. AI
-features are intentionally not implemented yet.
+Minimal FastAPI backend for an AI-assisted support summary application. Ticket
+analysis uses deterministic mock AI logic, so it requires no external AI
+provider.
 
 ## Stack
 
@@ -26,6 +27,16 @@ The API is available at:
 - Home page: <http://localhost:8000/>
 - Health check: <http://localhost:8000/health>
 - OpenAPI docs: <http://localhost:8000/docs>
+
+Analyze an existing ticket:
+
+```bash
+curl -X POST http://localhost:8000/api/tickets/1/analyze
+```
+
+The analysis includes a summary, category, priority, sentiment, and recommended
+action. Results are persisted and replaced when the same ticket is analyzed
+again.
 
 Stop the services with:
 

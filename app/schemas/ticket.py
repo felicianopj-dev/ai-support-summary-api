@@ -26,3 +26,13 @@ class TicketRead(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+
+
+class TicketAnalysisRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    summary: str
+    category: str
+    priority: str
+    sentiment: str
+    recommended_action: str

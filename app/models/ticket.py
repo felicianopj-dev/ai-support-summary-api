@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -26,3 +26,11 @@ class Ticket(Base):
         server_default=func.now(),
         onupdate=func.now(),
     )
+    analysis: Mapped["TicketAnalysis | None"] = relationship(
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+from app.models.ticket_analysis import TicketAnalysis  # noqa: E402

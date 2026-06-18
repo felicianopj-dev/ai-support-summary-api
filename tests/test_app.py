@@ -9,10 +9,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
 from app.main import app
+from app.models import TicketAnalysis
+from app.services import analyze_ticket
 
 
 @pytest.fixture()
-def test_db() -> Generator[None, None, None]:
+def test_db() -> Generator[sessionmaker[Session], None, None]:
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},
@@ -26,7 +28,7 @@ def test_db() -> Generator[None, None, None]:
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
-    yield
+    yield TestingSessionLocal
 
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
@@ -159,6 +161,97 @@ def test_update_ticket_status(test_db: None) -> None:
 
 def test_get_ticket_returns_404(test_db: None) -> None:
     response = asyncio.run(request("GET", "/api/tickets/404"))
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Ticket not found"}
+
+
+@pytest.mark.parametrize(
+    ("keyword", "category", "priority"),
+    [
+        ("payment", "billing", "high"),
+        ("webhook", "integration", "high"),
+        ("login", "authentication", "medium"),
+        ("refund", "billing", "high"),
+    ],
+)
+def test_mock_ai_uses_deterministic_keyword_rules(
+    keyword: str,
+    category: str,
+    priority: str,
+) -> None:
+    first = analyze_ticket(f"{keyword.title()} problem", f"The {keyword} failed.")
+    second = analyze_ticket(f"{keyword.title()} problem", f"The {keyword} failed.")
+
+    assert first == second
+    assert first.category == category
+    assert first.priority == priority
+    assert first.sentiment == "negative"
+
+
+def test_analyze_ticket_saves_analysis(
+    test_db: sessionmaker[Session],
+) -> None:
+    create_response = asyncio.run(
+        request(
+            "POST",
+            "/api/tickets",
+            json={
+                "customer_name": "Grace Hopper",
+                "customer_email": "grace@example.com",
+                "title": "Webhook delivery failed",
+                "description": "Our webhook never arrives.",
+            },
+        )
+    )
+    ticket_id = create_response.json()["id"]
+
+    response = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "summary": "Customer reports a webhook issue: Webhook delivery failed.",
+        "category": "integration",
+        "priority": "high",
+        "sentiment": "negative",
+        "recommended_action": "Inspect webhook delivery logs and retry the failed event.",
+    }
+
+    with test_db() as db:
+        saved = db.query(TicketAnalysis).filter_by(ticket_id=ticket_id).one()
+        assert saved.summary == response.json()["summary"]
+        assert saved.category == "integration"
+
+
+def test_reanalyze_ticket_updates_single_saved_analysis(
+    test_db: sessionmaker[Session],
+) -> None:
+    create_response = asyncio.run(
+        request(
+            "POST",
+            "/api/tickets",
+            json={
+                "customer_name": "Ada Lovelace",
+                "customer_email": "ada@example.com",
+                "title": "Login problem",
+                "description": "I cannot login.",
+            },
+        )
+    )
+    ticket_id = create_response.json()["id"]
+
+    first = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+    second = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json() == second.json()
+    with test_db() as db:
+        assert db.query(TicketAnalysis).filter_by(ticket_id=ticket_id).count() == 1
+
+
+def test_analyze_ticket_returns_404(test_db: None) -> None:
+    response = asyncio.run(request("POST", "/api/tickets/404/analyze"))
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Ticket not found"}
