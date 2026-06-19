@@ -9,6 +9,7 @@ class Settings:
         "DATABASE_URL",
         "postgresql+psycopg://postgres:postgres@localhost:5432/support_summary",
     )
+    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
 
 
 settings = Settings()
