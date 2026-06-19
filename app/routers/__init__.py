@@ -1,5 +1,5 @@
-from app.routers.insights import register_insights_routes
-from app.routers.pages import register_page_routes
-from app.routers.tickets import register_ticket_routes
+from app.routers.insights import router as insights_router
+from app.routers.pages import router as pages_router
+from app.routers.tickets import router as tickets_router
 
-__all__ = ["register_insights_routes", "register_page_routes", "register_ticket_routes"]
+__all__ = ["insights_router", "pages_router", "tickets_router"]
