@@ -36,3 +36,17 @@ class TicketAnalysisRead(BaseModel):
     priority: str
     sentiment: str
     recommended_action: str
+
+
+class CategoryCount(BaseModel):
+    category: str
+    count: int
+
+
+class InsightsRead(BaseModel):
+    total_tickets: int
+    open_tickets: int
+    analyzed_tickets: int
+    high_priority_tickets: int
+    top_categories: list[CategoryCount]
+    recent_high_priority_tickets: list[TicketRead]

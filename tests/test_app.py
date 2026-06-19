@@ -255,3 +255,83 @@ def test_analyze_ticket_returns_404(test_db: None) -> None:
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Ticket not found"}
+
+
+# --- insights ---
+
+_TICKET_ADA = {
+    "customer_name": "Ada Lovelace",
+    "customer_email": "ada@example.com",
+    "title": "Payment failed",
+    "description": "My payment was declined.",
+}
+
+_TICKET_GRACE = {
+    "customer_name": "Grace Hopper",
+    "customer_email": "grace@example.com",
+    "title": "Webhook not received",
+    "description": "Our webhook never arrives.",
+}
+
+_TICKET_ALAN = {
+    "customer_name": "Alan Turing",
+    "customer_email": "alan@example.com",
+    "title": "Login issue",
+    "description": "Cannot login to my account.",
+}
+
+
+def test_insights_empty(test_db: None) -> None:
+    response = asyncio.run(request("GET", "/api/insights"))
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_tickets"] == 0
+    assert body["open_tickets"] == 0
+    assert body["analyzed_tickets"] == 0
+    assert body["high_priority_tickets"] == 0
+    assert body["top_categories"] == []
+    assert body["recent_high_priority_tickets"] == []
+
+
+def test_insights_counts(test_db: None) -> None:
+    for payload in (_TICKET_ADA, _TICKET_GRACE, _TICKET_ALAN):
+        asyncio.run(request("POST", "/api/tickets", json=payload))
+
+    tickets = asyncio.run(request("GET", "/api/tickets")).json()
+    asyncio.run(request("POST", f"/api/tickets/{tickets[0]['id']}/analyze"))
+    asyncio.run(request("POST", f"/api/tickets/{tickets[1]['id']}/analyze"))
+    asyncio.run(
+        request("PATCH", f"/api/tickets/{tickets[2]['id']}/status", json={"status": "resolved"})
+    )
+
+    body = asyncio.run(request("GET", "/api/insights")).json()
+
+    assert body["total_tickets"] == 3
+    assert body["open_tickets"] == 2
+    assert body["analyzed_tickets"] == 2
+    assert body["high_priority_tickets"] == 2  # payment + webhook → both high
+
+
+def test_insights_top_categories(test_db: None) -> None:
+    for payload in (_TICKET_ADA, _TICKET_GRACE, _TICKET_ALAN):
+        r = asyncio.run(request("POST", "/api/tickets", json=payload))
+        asyncio.run(request("POST", f"/api/tickets/{r.json()['id']}/analyze"))
+
+    body = asyncio.run(request("GET", "/api/insights")).json()
+
+    categories = [c["category"] for c in body["top_categories"]]
+    assert "billing" in categories
+    assert "integration" in categories
+    assert "authentication" in categories
+
+
+def test_insights_recent_high_priority(test_db: None) -> None:
+    r = asyncio.run(request("POST", "/api/tickets", json=_TICKET_ADA))
+    ticket_id = r.json()["id"]
+    asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+
+    body = asyncio.run(request("GET", "/api/insights")).json()
+
+    assert len(body["recent_high_priority_tickets"]) == 1
+    assert body["recent_high_priority_tickets"][0]["id"] == ticket_id
