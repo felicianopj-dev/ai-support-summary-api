@@ -58,13 +58,13 @@ app/
 ## Screenshots
 
 **Dashboard**
-> Add a screenshot of `http://localhost:8000/` after running the seed script.
+![Dashboard](screenshots/dashboard.png)
 
 **Ticket list**
-> Add a screenshot of `http://localhost:8000/tickets`.
+![Ticket list](screenshots/tickets.png)
 
 **Ticket detail with AI analysis**
-> Add a screenshot of `http://localhost:8000/tickets/1`.
+![Ticket detail](screenshots/ticket-detail.png)
 
 ## Quick start
 
