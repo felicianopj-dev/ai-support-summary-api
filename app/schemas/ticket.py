@@ -1,6 +1,12 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+TicketStatus = Literal["open", "triaged", "resolved"]
+AnalysisCategory = Literal["billing", "authentication", "integration", "general"]
+AnalysisPriority = Literal["high", "medium", "low"]
+AnalysisSentiment = Literal["positive", "negative", "neutral"]
 
 
 class TicketCreate(BaseModel):
@@ -8,11 +14,11 @@ class TicketCreate(BaseModel):
     customer_email: str = Field(min_length=1, max_length=255)
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(min_length=1)
-    status: str = Field(default="open", min_length=1, max_length=50)
+    status: TicketStatus = "open"
 
 
 class TicketStatusUpdate(BaseModel):
-    status: str = Field(min_length=1, max_length=50)
+    status: TicketStatus
 
 
 class TicketRead(BaseModel):
@@ -32,9 +38,9 @@ class TicketAnalysisRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     summary: str
-    category: str
-    priority: str
-    sentiment: str
+    category: AnalysisCategory
+    priority: AnalysisPriority
+    sentiment: AnalysisSentiment
     recommended_action: str
 
 
