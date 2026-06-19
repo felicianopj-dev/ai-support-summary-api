@@ -1,32 +1,32 @@
 import json
 
-import openai
+import google.generativeai as genai
 
 from app.config import settings
-from app.services.mock_ai import MockAnalysis
+from app.services.base import AnalysisResult
 
-_SYSTEM_PROMPT = """\
+_PROMPT_TEMPLATE = """\
 You are a support ticket analyst. Given a ticket title and description, return a JSON object with exactly these fields:
 - summary: one sentence summarising the customer's issue
 - category: one of "billing", "authentication", "integration", "general"
 - priority: one of "high", "medium", "low"
 - sentiment: one of "positive", "negative", "neutral"
 - recommended_action: one sentence describing the next step for the support agent
-"""
+
+Title: {title}
+
+Description: {description}"""
 
 
-def analyze_ticket(title: str, description: str) -> MockAnalysis:
-    client = openai.OpenAI(api_key=settings.openai_api_key)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": f"Title: {title}\n\nDescription: {description}"},
-        ],
+def analyze_ticket(title: str, description: str) -> AnalysisResult:
+    genai.configure(api_key=settings.gemini_api_key)
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(
+        _PROMPT_TEMPLATE.format(title=title, description=description),
+        generation_config=genai.types.GenerationConfig(response_mime_type="application/json"),
     )
-    data = json.loads(response.choices[0].message.content)
-    return MockAnalysis(
+    data = json.loads(response.text)
+    return AnalysisResult(
         summary=data["summary"],
         category=data["category"],
         priority=data["priority"],

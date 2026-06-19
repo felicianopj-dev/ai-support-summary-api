@@ -9,7 +9,7 @@ This project covers the full backend lifecycle of a real-world feature:
 - Designing a REST API with FastAPI and Pydantic v2
 - Persisting relational data with SQLAlchemy 2 (mapped columns, relationships, cascade deletes)
 - Managing schema evolution with Alembic migrations
-- Implementing a **mock-first, real-AI-later** design — the system works without any API keys, and real OpenAI integration is enabled via a single environment variable
+- Implementing a **mock-first, real-AI-later** design — the system works without any API keys, and real Gemini integration is enabled via a single environment variable
 - Serving server-rendered HTML pages (Jinja2 + Bootstrap) alongside a JSON API in the same app
 - Writing integration tests with in-memory SQLite and no mocks
 
@@ -18,7 +18,7 @@ This project covers the full backend lifecycle of a real-world feature:
 - Ticket CRUD — create, list, get, and update ticket status
 - AI analysis per ticket: summary, category, priority, sentiment, and recommended action
 - Deterministic mock AI based on keyword rules — no external dependencies required
-- Optional OpenAI integration (`gpt-4o-mini`) activated via `OPENAI_API_KEY`
+- Optional Google Gemini integration (`gemini-1.5-flash`) activated via `GEMINI_API_KEY` — free tier available
 - Aggregate insights endpoint (`/api/insights`) with ticket counts and top categories
 - Server-rendered dashboard, ticket list, and detail pages
 - Seed script with 6 realistic demo tickets (`scripts/seed.py`)
@@ -36,7 +36,7 @@ This project covers the full backend lifecycle of a real-world feature:
 | DB driver | psycopg 3 |
 | Server | Uvicorn |
 | Templates | Jinja2 + Bootstrap 5 (CDN) |
-| AI (optional) | OpenAI SDK (`gpt-4o-mini`) |
+| AI (optional) | Google Gemini (`gemini-1.5-flash`) |
 | Tests | Pytest + HTTPX |
 | Containers | Docker Compose |
 
@@ -44,12 +44,12 @@ This project covers the full backend lifecycle of a real-world feature:
 
 Requests flow through `app/routers/` (FastAPI route handlers) into `app/services/` (AI analysis logic) and `app/models/` (SQLAlchemy ORM). `app/schemas/` defines Pydantic types for request validation and response serialization. HTML pages (`app/routers/pages.py`) and the JSON API share the same database session and models — there is no internal HTTP layer between them.
 
-The AI service (`app/services/`) checks for `OPENAI_API_KEY` at call time. If present, it calls OpenAI; otherwise it falls back to the deterministic mock. Tests always use the mock because no key is set in the test environment.
+The AI service (`app/services/`) checks for `GEMINI_API_KEY` at call time. If present, it calls Gemini; otherwise it falls back to the deterministic mock. Tests always use the mock because no key is set in the test environment.
 
 ```
 app/
 ├── routers/        # HTTP handlers (tickets, insights, pages)
-├── services/       # AI analysis (mock_ai.py + openai_ai.py)
+├── services/       # AI analysis (mock_ai.py + gemini_ai.py)
 ├── models/         # SQLAlchemy ORM models (Ticket, TicketAnalysis)
 ├── schemas/        # Pydantic request/response types
 └── templates/      # Jinja2 HTML templates
@@ -119,19 +119,20 @@ curl -X POST http://localhost:8000/api/tickets/1/analyze
 curl http://localhost:8000/api/insights
 ```
 
-## OpenAI integration
+## Gemini integration
 
-By default the mock AI service is used. To switch to real OpenAI analysis:
+By default the mock AI service is used. To switch to real Gemini analysis (free tier — no credit card required):
 
 ```bash
 # Install the optional dependency
 pip install -e ".[ai]"
 
-# Set the key (or add it to .env)
-export OPENAI_API_KEY=sk-...
+# Get a free key at https://aistudio.google.com/apikey
+# Then set it (or add it to .env)
+export GEMINI_API_KEY=...
 ```
 
-When `OPENAI_API_KEY` is set, `POST /api/tickets/{id}/analyze` calls `gpt-4o-mini` and returns a real AI-generated analysis. Tests are unaffected — they always run in mock mode.
+When `GEMINI_API_KEY` is set, `POST /api/tickets/{id}/analyze` calls `gemini-1.5-flash` and returns a real AI-generated analysis. Tests are unaffected — they always run in mock mode.
 
 ## Run locally
 

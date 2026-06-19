@@ -1,14 +1,4 @@
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class MockAnalysis:
-    summary: str
-    category: str
-    priority: str
-    sentiment: str
-    recommended_action: str
-
+from app.services.base import AnalysisResult
 
 _RULES = (
     (
@@ -55,7 +45,7 @@ _NEGATIVE_WORDS = (
 _POSITIVE_WORDS = ("thanks", "thank you", "great", "resolved", "working")
 
 
-def analyze_ticket(title: str, description: str) -> MockAnalysis:
+def analyze_ticket(title: str, description: str) -> AnalysisResult:
     text = f"{title} {description}".lower()
 
     matched_keyword = None
@@ -81,7 +71,7 @@ def analyze_ticket(title: str, description: str) -> MockAnalysis:
     subject = matched_keyword or "support"
     summary = f"Customer reports a {subject} issue: {title.strip()}."
 
-    return MockAnalysis(
+    return AnalysisResult(
         summary=summary,
         category=category,
         priority=priority,
