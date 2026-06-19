@@ -1,4 +1,3 @@
-import asyncio
 from collections.abc import Generator
 
 import pytest
@@ -40,32 +39,30 @@ async def request(method: str, path: str, **kwargs) -> Response:
         return await client.request(method, path, **kwargs)
 
 
-def test_health_check(test_db: None) -> None:
-    response = asyncio.run(request("GET", "/health"))
+async def test_health_check(test_db: None) -> None:
+    response = await request("GET", "/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
 
-def test_home_page(test_db: None) -> None:
-    response = asyncio.run(request("GET", "/"))
+async def test_home_page(test_db: None) -> None:
+    response = await request("GET", "/")
 
     assert response.status_code == 200
     assert "Dashboard" in response.text
 
 
-def test_create_ticket(test_db: None) -> None:
-    response = asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Ada Lovelace",
-                "customer_email": "ada@example.com",
-                "title": "Cannot sign in",
-                "description": "Password reset email never arrives.",
-            },
-        )
+async def test_create_ticket(test_db: None) -> None:
+    response = await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Ada Lovelace",
+            "customer_email": "ada@example.com",
+            "title": "Cannot sign in",
+            "description": "Password reset email never arrives.",
+        },
     )
 
     assert response.status_code == 201
@@ -80,87 +77,77 @@ def test_create_ticket(test_db: None) -> None:
     assert body["updated_at"]
 
 
-def test_list_tickets(test_db: None) -> None:
-    asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Ada Lovelace",
-                "customer_email": "ada@example.com",
-                "title": "Cannot sign in",
-                "description": "Password reset email never arrives.",
-            },
-        )
+async def test_list_tickets(test_db: None) -> None:
+    await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Ada Lovelace",
+            "customer_email": "ada@example.com",
+            "title": "Cannot sign in",
+            "description": "Password reset email never arrives.",
+        },
     )
-    asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Grace Hopper",
-                "customer_email": "grace@example.com",
-                "title": "Export failed",
-                "description": "CSV export returned a 500 response.",
-                "status": "triaged",
-            },
-        )
+    await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Grace Hopper",
+            "customer_email": "grace@example.com",
+            "title": "Export failed",
+            "description": "CSV export returned a 500 response.",
+            "status": "triaged",
+        },
     )
 
-    response = asyncio.run(request("GET", "/api/tickets"))
+    response = await request("GET", "/api/tickets")
 
     assert response.status_code == 200
     assert [ticket["title"] for ticket in response.json()] == ["Cannot sign in", "Export failed"]
 
 
-def test_get_ticket(test_db: None) -> None:
-    create_response = asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Ada Lovelace",
-                "customer_email": "ada@example.com",
-                "title": "Cannot sign in",
-                "description": "Password reset email never arrives.",
-            },
-        )
+async def test_get_ticket(test_db: None) -> None:
+    create_response = await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Ada Lovelace",
+            "customer_email": "ada@example.com",
+            "title": "Cannot sign in",
+            "description": "Password reset email never arrives.",
+        },
     )
 
-    response = asyncio.run(request("GET", f"/api/tickets/{create_response.json()['id']}"))
+    response = await request("GET", f"/api/tickets/{create_response.json()['id']}")
 
     assert response.status_code == 200
     assert response.json()["title"] == "Cannot sign in"
 
 
-def test_update_ticket_status(test_db: None) -> None:
-    create_response = asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Ada Lovelace",
-                "customer_email": "ada@example.com",
-                "title": "Cannot sign in",
-                "description": "Password reset email never arrives.",
-            },
-        )
+async def test_update_ticket_status(test_db: None) -> None:
+    create_response = await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Ada Lovelace",
+            "customer_email": "ada@example.com",
+            "title": "Cannot sign in",
+            "description": "Password reset email never arrives.",
+        },
     )
 
-    response = asyncio.run(
-        request(
-            "PATCH",
-            f"/api/tickets/{create_response.json()['id']}/status",
-            json={"status": "resolved"},
-        )
+    response = await request(
+        "PATCH",
+        f"/api/tickets/{create_response.json()['id']}/status",
+        json={"status": "resolved"},
     )
 
     assert response.status_code == 200
     assert response.json()["status"] == "resolved"
 
 
-def test_get_ticket_returns_404(test_db: None) -> None:
-    response = asyncio.run(request("GET", "/api/tickets/404"))
+async def test_get_ticket_returns_404(test_db: None) -> None:
+    response = await request("GET", "/api/tickets/404")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Ticket not found"}
@@ -189,24 +176,22 @@ def test_mock_ai_uses_deterministic_keyword_rules(
     assert first.sentiment == "negative"
 
 
-def test_analyze_ticket_saves_analysis(
+async def test_analyze_ticket_saves_analysis(
     test_db: sessionmaker[Session],
 ) -> None:
-    create_response = asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Grace Hopper",
-                "customer_email": "grace@example.com",
-                "title": "Webhook delivery failed",
-                "description": "Our webhook never arrives.",
-            },
-        )
+    create_response = await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Grace Hopper",
+            "customer_email": "grace@example.com",
+            "title": "Webhook delivery failed",
+            "description": "Our webhook never arrives.",
+        },
     )
     ticket_id = create_response.json()["id"]
 
-    response = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+    response = await request("POST", f"/api/tickets/{ticket_id}/analyze")
 
     assert response.status_code == 200
     assert response.json() == {
@@ -223,25 +208,23 @@ def test_analyze_ticket_saves_analysis(
         assert saved.category == "integration"
 
 
-def test_reanalyze_ticket_updates_single_saved_analysis(
+async def test_reanalyze_ticket_updates_single_saved_analysis(
     test_db: sessionmaker[Session],
 ) -> None:
-    create_response = asyncio.run(
-        request(
-            "POST",
-            "/api/tickets",
-            json={
-                "customer_name": "Ada Lovelace",
-                "customer_email": "ada@example.com",
-                "title": "Login problem",
-                "description": "I cannot login.",
-            },
-        )
+    create_response = await request(
+        "POST",
+        "/api/tickets",
+        json={
+            "customer_name": "Ada Lovelace",
+            "customer_email": "ada@example.com",
+            "title": "Login problem",
+            "description": "I cannot login.",
+        },
     )
     ticket_id = create_response.json()["id"]
 
-    first = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
-    second = asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+    first = await request("POST", f"/api/tickets/{ticket_id}/analyze")
+    second = await request("POST", f"/api/tickets/{ticket_id}/analyze")
 
     assert first.status_code == 200
     assert second.status_code == 200
@@ -250,8 +233,8 @@ def test_reanalyze_ticket_updates_single_saved_analysis(
         assert db.query(TicketAnalysis).filter_by(ticket_id=ticket_id).count() == 1
 
 
-def test_analyze_ticket_returns_404(test_db: None) -> None:
-    response = asyncio.run(request("POST", "/api/tickets/404/analyze"))
+async def test_analyze_ticket_returns_404(test_db: None) -> None:
+    response = await request("POST", "/api/tickets/404/analyze")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Ticket not found"}
@@ -281,8 +264,8 @@ _TICKET_ALAN = {
 }
 
 
-def test_insights_empty(test_db: None) -> None:
-    response = asyncio.run(request("GET", "/api/insights"))
+async def test_insights_empty(test_db: None) -> None:
+    response = await request("GET", "/api/insights")
 
     assert response.status_code == 200
     body = response.json()
@@ -294,31 +277,29 @@ def test_insights_empty(test_db: None) -> None:
     assert body["recent_high_priority_tickets"] == []
 
 
-def test_insights_counts(test_db: None) -> None:
+async def test_insights_counts(test_db: None) -> None:
     for payload in (_TICKET_ADA, _TICKET_GRACE, _TICKET_ALAN):
-        asyncio.run(request("POST", "/api/tickets", json=payload))
+        await request("POST", "/api/tickets", json=payload)
 
-    tickets = asyncio.run(request("GET", "/api/tickets")).json()
-    asyncio.run(request("POST", f"/api/tickets/{tickets[0]['id']}/analyze"))
-    asyncio.run(request("POST", f"/api/tickets/{tickets[1]['id']}/analyze"))
-    asyncio.run(
-        request("PATCH", f"/api/tickets/{tickets[2]['id']}/status", json={"status": "resolved"})
-    )
+    tickets = (await request("GET", "/api/tickets")).json()
+    await request("POST", f"/api/tickets/{tickets[0]['id']}/analyze")
+    await request("POST", f"/api/tickets/{tickets[1]['id']}/analyze")
+    await request("PATCH", f"/api/tickets/{tickets[2]['id']}/status", json={"status": "resolved"})
 
-    body = asyncio.run(request("GET", "/api/insights")).json()
+    body = (await request("GET", "/api/insights")).json()
 
     assert body["total_tickets"] == 3
     assert body["open_tickets"] == 2
     assert body["analyzed_tickets"] == 2
-    assert body["high_priority_tickets"] == 2  # payment + webhook → both high
+    assert body["high_priority_tickets"] == 2
 
 
-def test_insights_top_categories(test_db: None) -> None:
+async def test_insights_top_categories(test_db: None) -> None:
     for payload in (_TICKET_ADA, _TICKET_GRACE, _TICKET_ALAN):
-        r = asyncio.run(request("POST", "/api/tickets", json=payload))
-        asyncio.run(request("POST", f"/api/tickets/{r.json()['id']}/analyze"))
+        r = await request("POST", "/api/tickets", json=payload)
+        await request("POST", f"/api/tickets/{r.json()['id']}/analyze")
 
-    body = asyncio.run(request("GET", "/api/insights")).json()
+    body = (await request("GET", "/api/insights")).json()
 
     categories = [c["category"] for c in body["top_categories"]]
     assert "billing" in categories
@@ -326,12 +307,12 @@ def test_insights_top_categories(test_db: None) -> None:
     assert "authentication" in categories
 
 
-def test_insights_recent_high_priority(test_db: None) -> None:
-    r = asyncio.run(request("POST", "/api/tickets", json=_TICKET_ADA))
+async def test_insights_recent_high_priority(test_db: None) -> None:
+    r = await request("POST", "/api/tickets", json=_TICKET_ADA)
     ticket_id = r.json()["id"]
-    asyncio.run(request("POST", f"/api/tickets/{ticket_id}/analyze"))
+    await request("POST", f"/api/tickets/{ticket_id}/analyze")
 
-    body = asyncio.run(request("GET", "/api/insights")).json()
+    body = (await request("GET", "/api/insights")).json()
 
     assert len(body["recent_high_priority_tickets"]) == 1
     assert body["recent_high_priority_tickets"][0]["id"] == ticket_id
