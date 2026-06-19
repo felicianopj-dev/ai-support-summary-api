@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
@@ -23,7 +23,7 @@ def test_db() -> Generator[sessionmaker[Session], None, None]:
     TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     Base.metadata.create_all(bind=engine)
 
-    async def override_get_db() -> AsyncGenerator[Session, None]:
+    def override_get_db() -> Generator[Session, None, None]:
         with TestingSessionLocal() as session:
             yield session
 

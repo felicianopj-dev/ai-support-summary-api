@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api", tags=["insights"])
 
 
 @router.get("/insights", response_model=InsightsRead)
-async def get_insights(db: DbSession) -> InsightsRead:
+def get_insights(db: DbSession) -> InsightsRead:
     total = db.scalar(select(func.count()).select_from(Ticket)) or 0
     open_count = db.scalar(select(func.count()).where(Ticket.status == "open")) or 0
     analyzed = db.scalar(select(func.count()).select_from(TicketAnalysis)) or 0

@@ -18,7 +18,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent.parent / "templates"
 
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, db: DbSession) -> HTMLResponse:
+def dashboard(request: Request, db: DbSession) -> HTMLResponse:
     total = db.scalar(select(func.count()).select_from(Ticket)) or 0
     open_count = db.scalar(select(func.count()).where(Ticket.status == "open")) or 0
     analyzed = db.scalar(select(func.count()).select_from(TicketAnalysis)) or 0
@@ -54,7 +54,7 @@ async def dashboard(request: Request, db: DbSession) -> HTMLResponse:
 
 
 @router.get("/tickets", response_class=HTMLResponse)
-async def ticket_list(request: Request, db: DbSession) -> HTMLResponse:
+def ticket_list(request: Request, db: DbSession) -> HTMLResponse:
     tickets = list(db.scalars(select(Ticket).order_by(Ticket.id)))
     return templates.TemplateResponse(
         request=request, name="tickets.html", context={"tickets": tickets}
@@ -62,7 +62,7 @@ async def ticket_list(request: Request, db: DbSession) -> HTMLResponse:
 
 
 @router.get("/tickets/{ticket_id}", response_class=HTMLResponse)
-async def ticket_detail(request: Request, ticket_id: int, db: DbSession) -> HTMLResponse:
+def ticket_detail(request: Request, ticket_id: int, db: DbSession) -> HTMLResponse:
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")

@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api", tags=["tickets"])
 
 
 @router.post("/tickets", response_model=TicketRead, status_code=status.HTTP_201_CREATED)
-async def create_ticket(ticket_in: TicketCreate, db: DbSession) -> Ticket:
+def create_ticket(ticket_in: TicketCreate, db: DbSession) -> Ticket:
     ticket = Ticket(**ticket_in.model_dump())
     db.add(ticket)
     db.commit()
@@ -24,12 +24,12 @@ async def create_ticket(ticket_in: TicketCreate, db: DbSession) -> Ticket:
 
 
 @router.get("/tickets", response_model=list[TicketRead])
-async def list_tickets(db: DbSession) -> list[Ticket]:
+def list_tickets(db: DbSession) -> list[Ticket]:
     return list(db.scalars(select(Ticket).order_by(Ticket.id)).all())
 
 
 @router.get("/tickets/{ticket_id}", response_model=TicketRead)
-async def get_ticket(ticket_id: int, db: DbSession) -> Ticket:
+def get_ticket(ticket_id: int, db: DbSession) -> Ticket:
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
@@ -37,7 +37,7 @@ async def get_ticket(ticket_id: int, db: DbSession) -> Ticket:
 
 
 @router.patch("/tickets/{ticket_id}/status", response_model=TicketRead)
-async def update_ticket_status(
+def update_ticket_status(
     ticket_id: int,
     ticket_in: TicketStatusUpdate,
     db: DbSession,
@@ -52,7 +52,7 @@ async def update_ticket_status(
 
 
 @router.post("/tickets/{ticket_id}/analyze", response_model=TicketAnalysisRead)
-async def analyze_ticket_endpoint(ticket_id: int, db: DbSession) -> TicketAnalysis:
+def analyze_ticket_endpoint(ticket_id: int, db: DbSession) -> TicketAnalysis:
     ticket = db.get(Ticket, ticket_id)
     if ticket is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
