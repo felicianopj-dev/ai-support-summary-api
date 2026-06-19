@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket.id }} — Support Summary{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="/tickets" class="text-decoration-none text-muted">&larr; Back to Tickets</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Ticket #{{ ticket.id }}</span>
+        {% if ticket.status == "open" %}
+          <span class="badge bg-warning text-dark">{{ ticket.status }}</span>
+        {% elif ticket.status == "resolved" %}
+          <span class="badge bg-success">{{ ticket.status }}</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ ticket.status }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">{{ ticket.title }}</h5>
+        <p class="card-text text-muted">{{ ticket.description }}</p>
+        <hr>
+        <dl class="row mb-0 small">
+          <dt class="col-sm-4">Customer</dt>
+          <dd class="col-sm-8">{{ ticket.customer_name }}</dd>
+          <dt class="col-sm-4">Email</dt>
+          <dd class="col-sm-8">{{ ticket.customer_email }}</dd>
+          <dt class="col-sm-4">Created</dt>
+          <dd class="col-sm-8">{{ ticket.created_at.strftime("%Y-%m-%d %H:%M") }}</dd>
+          <dt class="col-sm-4">Updated</dt>
+          <dd class="col-sm-8">{{ ticket.updated_at.strftime("%Y-%m-%d %H:%M") }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header fw-semibold">AI Analysis</div>
+      <div class="card-body">
+        {% if ticket.analysis %}
+        <dl class="row mb-0 small">
+          <dt class="col-sm-5">Summary</dt>
+          <dd class="col-sm-7">{{ ticket.analysis.summary }}</dd>
+          <dt class="col-sm-5">Category</dt>
+          <dd class="col-sm-7"><span class="badge bg-primary">{{ ticket.analysis.category }}</span></dd>
+          <dt class="col-sm-5">Priority</dt>
+          <dd class="col-sm-7">
+            {% if ticket.analysis.priority == "high" %}
+              <span class="badge bg-danger">{{ ticket.analysis.priority }}</span>
+            {% elif ticket.analysis.priority == "medium" %}
+              <span class="badge bg-warning text-dark">{{ ticket.analysis.priority }}</span>
+            {% else %}
+              <span class="badge bg-secondary">{{ ticket.analysis.priority }}</span>
+            {% endif %}
+          </dd>
+          <dt class="col-sm-5">Sentiment</dt>
+          <dd class="col-sm-7">{{ ticket.analysis.sentiment }}</dd>
+          <dt class="col-sm-5">Action</dt>
+          <dd class="col-sm-7">{{ ticket.analysis.recommended_action }}</dd>
+        </dl>
+        {% else %}
+        <p class="text-muted mb-2">Not analyzed yet.</p>
+        <p class="small text-muted mb-0">
+          Trigger via:
+          <code>POST /api/tickets/{{ ticket.id }}/analyze</code>
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

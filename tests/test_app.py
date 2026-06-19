@@ -51,7 +51,7 @@ def test_home_page(test_db: None) -> None:
     response = asyncio.run(request("GET", "/"))
 
     assert response.status_code == 200
-    assert "AI Support Summary API" in response.text
+    assert "Dashboard" in response.text
 
 
 def test_create_ticket(test_db: None) -> None:
