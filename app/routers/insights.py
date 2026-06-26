@@ -18,9 +18,7 @@ def get_insights(db: DbSession) -> InsightsRead:
     total = db.scalar(select(func.count()).select_from(Ticket)) or 0
     open_count = db.scalar(select(func.count()).where(Ticket.status == "open")) or 0
     analyzed = db.scalar(select(func.count()).select_from(TicketAnalysis)) or 0
-    high_priority = (
-        db.scalar(select(func.count()).where(TicketAnalysis.priority == "high")) or 0
-    )
+    high_priority = db.scalar(select(func.count()).where(TicketAnalysis.priority == "high")) or 0
 
     top_cats = db.execute(
         select(TicketAnalysis.category, func.count().label("n"))

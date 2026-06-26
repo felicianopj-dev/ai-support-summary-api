@@ -1,6 +1,7 @@
+from fastapi import FastAPI
+
 from app.config import settings
 from app.routers import insights_router, pages_router, tickets_router
-from fastapi import FastAPI
 
 
 def create_app() -> FastAPI:

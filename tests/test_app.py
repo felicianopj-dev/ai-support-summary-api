@@ -9,7 +9,8 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.main import app
 from app.models import TicketAnalysis
-from app.services import analyze_ticket
+from app.services import analyze_ticket, gemini_ai
+from app.services.base import AnalysisResult
 
 
 @pytest.fixture()
@@ -174,6 +175,41 @@ def test_mock_ai_uses_deterministic_keyword_rules(
     assert first.category == category
     assert first.priority == priority
     assert first.sentiment == "negative"
+
+
+# --- gemini hardening ---
+
+
+def test_gemini_falls_back_to_mock_on_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(title: str, description: str) -> AnalysisResult:
+        raise RuntimeError("network down")
+
+    monkeypatch.setattr(gemini_ai, "_call_gemini", boom)
+
+    result = gemini_ai.analyze_ticket("Login problem", "I cannot login.")
+
+    assert result == gemini_ai._mock_analyze("Login problem", "I cannot login.")
+
+
+def test_gemini_falls_back_when_response_is_out_of_enum(monkeypatch: pytest.MonkeyPatch) -> None:
+    class _FakeResponse:
+        text = '{"summary": "x", "category": "not-a-category", "priority": "high", '
+        text += '"sentiment": "negative", "recommended_action": "y"}'
+
+    class _FakeModel:
+        def __init__(self, *args: object, **kwargs: object) -> None:
+            pass
+
+        def generate_content(self, *args: object, **kwargs: object) -> _FakeResponse:
+            return _FakeResponse()
+
+    monkeypatch.setattr(gemini_ai.genai, "configure", lambda **kwargs: None)
+    monkeypatch.setattr(gemini_ai.genai, "GenerativeModel", _FakeModel)
+
+    result = gemini_ai.analyze_ticket("Login problem", "I cannot login.")
+
+    # Invalid enum value is rejected, so we degrade to the deterministic mock instead of 500ing.
+    assert result == gemini_ai._mock_analyze("Login problem", "I cannot login.")
 
 
 async def test_analyze_ticket_saves_analysis(

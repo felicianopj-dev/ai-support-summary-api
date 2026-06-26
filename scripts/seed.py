@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+
 from sqlalchemy import func, select
 
 from app.database import SessionLocal
@@ -108,5 +109,7 @@ def seed(force: bool) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed the database with demo support tickets.")
-    parser.add_argument("--force", action="store_true", help="Clear existing tickets before seeding.")
+    parser.add_argument(
+        "--force", action="store_true", help="Clear existing tickets before seeding."
+    )
     seed(parser.parse_args().force)

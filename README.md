@@ -1,5 +1,8 @@
 # AI Support Summary API
 
+<!-- Replace OWNER with your GitHub username/org once the repo is pushed. -->
+[![CI](https://github.com/OWNER/ai-support-summary-api/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/ai-support-summary-api/actions/workflows/ci.yml)
+
 A FastAPI backend that simulates a customer support system where tickets are analyzed by an AI service and stored in a relational database. Built as a portfolio project to demonstrate production-style Python backend patterns.
 
 ## Why this project
@@ -22,7 +25,8 @@ This project covers the full backend lifecycle of a real-world feature:
 - Aggregate insights endpoint (`/api/insights`) with ticket counts and top categories
 - Server-rendered dashboard, ticket list, and detail pages
 - Seed script with 6 realistic demo tickets (`scripts/seed.py`)
-- 18 automated tests using in-memory SQLite — no database connection needed to run tests
+- 20 automated tests using in-memory SQLite — no database connection needed to run tests
+- Continuous integration (GitHub Actions) running Ruff lint + format, strict Mypy, and the test suite
 - Alembic migrations with a dated naming convention (`YYYYMMDD_NNNN_description`)
 
 ## Tech stack
@@ -160,9 +164,19 @@ python scripts/seed.py --force   # clear and reseed
 Tests use an in-memory SQLite database and do not require a running PostgreSQL instance.
 
 ```bash
-pytest            # run all 18 tests
+pytest            # run all 20 tests
 pytest -v         # verbose output
 pytest -k analyze # run tests matching a keyword
+```
+
+## Code quality
+
+Linting, formatting, and type checking match what CI enforces on every push:
+
+```bash
+ruff check .          # lint
+ruff format --check . # formatting
+mypy app              # strict static type checking
 ```
 
 ## Database migrations
