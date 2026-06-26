@@ -1,7 +1,6 @@
 # AI Support Summary API
 
-<!-- Replace OWNER with your GitHub username/org once the repo is pushed. -->
-[![CI](https://github.com/OWNER/ai-support-summary-api/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/ai-support-summary-api/actions/workflows/ci.yml)
+[![CI](https://github.com/felicianopj-dev/ai-support-summary-api/actions/workflows/ci.yml/badge.svg)](https://github.com/felicianopj-dev/ai-support-summary-api/actions/workflows/ci.yml)
 
 A FastAPI backend that simulates a customer support system where tickets are analyzed by an AI service and stored in a relational database. Built as a portfolio project to demonstrate production-style Python backend patterns.
 
