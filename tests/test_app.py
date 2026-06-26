@@ -193,18 +193,19 @@ def test_gemini_falls_back_to_mock_on_api_error(monkeypatch: pytest.MonkeyPatch)
 
 def test_gemini_falls_back_when_response_is_out_of_enum(monkeypatch: pytest.MonkeyPatch) -> None:
     class _FakeResponse:
-        text = '{"summary": "x", "category": "not-a-category", "priority": "high", '
-        text += '"sentiment": "negative", "recommended_action": "y"}'
+        text = (
+            '{"summary": "x", "category": "not-a-category", "priority": "high", '
+            '"sentiment": "negative", "recommended_action": "y"}'
+        )
 
-    class _FakeModel:
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            pass
-
+    class _FakeModels:
         def generate_content(self, *args: object, **kwargs: object) -> _FakeResponse:
             return _FakeResponse()
 
-    monkeypatch.setattr(gemini_ai.genai, "configure", lambda **kwargs: None)
-    monkeypatch.setattr(gemini_ai.genai, "GenerativeModel", _FakeModel)
+    class _FakeClient:
+        models = _FakeModels()
+
+    monkeypatch.setattr(gemini_ai, "_get_client", lambda: _FakeClient())
 
     result = gemini_ai.analyze_ticket("Login problem", "I cannot login.")
 

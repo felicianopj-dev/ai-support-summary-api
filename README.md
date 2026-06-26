@@ -21,7 +21,7 @@ This project covers the full backend lifecycle of a real-world feature:
 - Ticket CRUD — create, list, get, and update ticket status
 - AI analysis per ticket: summary, category, priority, sentiment, and recommended action
 - Deterministic mock AI based on keyword rules — no external dependencies required
-- Optional Google Gemini integration (`gemini-1.5-flash`) activated via `GEMINI_API_KEY` — free tier available
+- Optional Google Gemini integration (`gemini-2.0-flash`) activated via `GEMINI_API_KEY` — free tier available
 - Aggregate insights endpoint (`/api/insights`) with ticket counts and top categories
 - Server-rendered dashboard, ticket list, and detail pages
 - Seed script with 6 realistic demo tickets (`scripts/seed.py`)
@@ -40,7 +40,7 @@ This project covers the full backend lifecycle of a real-world feature:
 | DB driver | psycopg 3 |
 | Server | Uvicorn |
 | Templates | Jinja2 + Bootstrap 5 (CDN) |
-| AI (optional) | Google Gemini (`gemini-1.5-flash`) |
+| AI (optional) | Google Gemini (`gemini-2.0-flash`) |
 | Tests | Pytest + HTTPX |
 | Containers | Docker Compose |
 
@@ -136,7 +136,7 @@ pip install -e ".[ai]"
 export GEMINI_API_KEY=...
 ```
 
-When `GEMINI_API_KEY` is set, `POST /api/tickets/{id}/analyze` calls `gemini-1.5-flash` and returns a real AI-generated analysis. Tests are unaffected — they always run in mock mode.
+When `GEMINI_API_KEY` is set, `POST /api/tickets/{id}/analyze` calls `gemini-2.0-flash` and returns a real AI-generated analysis. Tests are unaffected — they always run in mock mode.
 
 ## Run locally
 

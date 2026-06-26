@@ -1,7 +1,8 @@
 import json
 import logging
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
@@ -11,7 +12,8 @@ from app.services.mock_ai import analyze_ticket as _mock_analyze
 
 logger = logging.getLogger(__name__)
 
-_REQUEST_TIMEOUT_SECONDS = 15
+_MODEL = "gemini-2.0-flash"
+_REQUEST_TIMEOUT_MS = 15_000
 
 _PROMPT_TEMPLATE = """\
 You are a support ticket analyst. Given a ticket title and description, return a JSON \
@@ -37,6 +39,16 @@ class _GeminiAnalysis(BaseModel):
     recommended_action: str
 
 
+_client: genai.Client | None = None
+
+
+def _get_client() -> genai.Client:
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=settings.gemini_api_key)
+    return _client
+
+
 def analyze_ticket(title: str, description: str) -> AnalysisResult:
     try:
         return _call_gemini(title, description)
@@ -48,13 +60,17 @@ def analyze_ticket(title: str, description: str) -> AnalysisResult:
 
 
 def _call_gemini(title: str, description: str) -> AnalysisResult:
-    genai.configure(api_key=settings.gemini_api_key)  # type: ignore[attr-defined]
-    model = genai.GenerativeModel("gemini-1.5-flash")  # type: ignore[attr-defined]
-    response = model.generate_content(
-        _PROMPT_TEMPLATE.format(title=title, description=description),
-        generation_config=genai.types.GenerationConfig(response_mime_type="application/json"),
-        request_options={"timeout": _REQUEST_TIMEOUT_SECONDS},
+    response = _get_client().models.generate_content(
+        model=_MODEL,
+        contents=_PROMPT_TEMPLATE.format(title=title, description=description),
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            http_options=types.HttpOptions(timeout=_REQUEST_TIMEOUT_MS),
+        ),
     )
+
+    if response.text is None:
+        raise ValueError("Gemini returned an empty response.")
 
     try:
         data = json.loads(response.text)
