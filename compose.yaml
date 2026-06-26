@@ -6,6 +6,9 @@ services:
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/support_summary
+      # Passed through from the host shell or a local .env file (Compose auto-loads it).
+      # Leave unset to use the deterministic mock analyser.
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "8000:8000"
     volumes:

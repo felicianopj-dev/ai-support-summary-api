@@ -10,7 +10,8 @@ COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
 
-RUN pip install --no-cache-dir .
+# Install the ai extra so the optional Gemini path is available when GEMINI_API_KEY is set.
+RUN pip install --no-cache-dir ".[ai]"
 
 EXPOSE 8000
 

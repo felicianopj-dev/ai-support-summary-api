@@ -138,6 +138,8 @@ export GEMINI_API_KEY=...
 
 When `GEMINI_API_KEY` is set, `POST /api/tickets/{id}/analyze` calls `gemini-2.0-flash` and returns a real AI-generated analysis. Tests are unaffected — they always run in mock mode.
 
+Under Docker Compose the key is passed through from your host shell or a local `.env` file (Compose auto-loads it), so `GEMINI_API_KEY=... docker compose up` — or putting the key in `.env` — enables the live path inside the container. The image installs the `ai` extra, so the Gemini SDK is already present.
+
 ## Run locally
 
 Requirements: Python 3.12 and a running PostgreSQL instance.
