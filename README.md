@@ -1,6 +1,8 @@
 # AI Support Summary API
 
 [![CI](https://github.com/felicianopj-dev/ai-support-summary-api/actions/workflows/ci.yml/badge.svg)](https://github.com/felicianopj-dev/ai-support-summary-api/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/felicianopj-dev/ai-support-summary-api/branch/main/graph/badge.svg)](https://codecov.io/gh/felicianopj-dev/ai-support-summary-api)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A FastAPI backend that simulates a customer support system where tickets are analyzed by an AI service and stored in a relational database. Built as a portfolio project to demonstrate production-style Python backend patterns.
 
@@ -74,7 +76,7 @@ app/
 Requirements: Docker with Compose support.
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/felicianopj-dev/ai-support-summary-api.git
 cd ai-support-summary-api
 docker compose up --build
 ```
@@ -172,12 +174,21 @@ pytest -k analyze # run tests matching a keyword
 
 ## Code quality
 
-Linting, formatting, and type checking match what CI enforces on every push:
+Linting, formatting, type checking, and a 90% coverage gate match what CI enforces on every push:
 
 ```bash
 ruff check .          # lint
 ruff format --check . # formatting
 mypy app              # strict static type checking
+pytest --cov=app      # tests with coverage report
+```
+
+A `Makefile` wraps the common tasks (`make check` runs lint + typecheck + tests), and
+[pre-commit](https://pre-commit.com) hooks (ruff + mypy) run the same checks before each commit:
+
+```bash
+make install   # editable install + pre-commit hooks
+make check     # everything CI enforces
 ```
 
 ## Database migrations
